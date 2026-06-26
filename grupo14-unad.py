@@ -35,3 +35,33 @@ class ReservaInvalidaError(SistemaError):
 class ParametroFaltanteError(SistemaError):
     """Lanzada cuando faltan parametros obligatorios."""
     pass
+
+
+
+# 2. LOGGER (REGISTRO DE EVENTOS Y ERRORES)
+
+
+class LoggerSistema:
+    """Maneja el registro de eventos y errores en archivos de texto."""
+    
+    @staticmethod
+    def _escribir(archivo: str, mensaje: str) -> None:
+        """Escribe un mensaje con timestamp en el archivo especificado."""
+        try:
+            with open(archivo, "a", encoding="utf-8") as f:
+                timestamp = datetime.datetime.now().isoformat()
+                f.write(f"{timestamp} - {mensaje}\n")
+        except Exception as e:
+            print(f"Error critico al escribir en log: {e}")
+    
+    @staticmethod
+    def registrar_evento(mensaje: str) -> None:
+        LoggerSistema._escribir("eventos.log", f"[EVENTO] {mensaje}")
+    
+    @staticmethod
+    def registrar_error(mensaje: str, exc_info: Optional[Exception] = None) -> None:
+        if exc_info:
+            mensaje = f"{mensaje} - {type(exc_info).__name__}: {exc_info}"
+        LoggerSistema._escribir("errores.log", f"[ERROR] {mensaje}")
+
+        
