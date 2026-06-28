@@ -64,4 +64,23 @@ class LoggerSistema:
             mensaje = f"{mensaje} - {type(exc_info).__name__}: {exc_info}"
         LoggerSistema._escribir("errores.log", f"[ERROR] {mensaje}")
 
-        
+       # 3. CLASE ABSTRACTA ENTIDAD
+
+class Entidad(ABC):
+    """Clase base abstracta para todas las entidades."""
+    
+    def __init__(self, id_entidad: str, nombre: str):
+        self._id = id_entidad
+        self._nombre = nombre
+    
+    @property
+    def id(self) -> str:
+        return self._id
+    
+    @property
+    def nombre(self) -> str:
+        return self._nombre
+    
+    @abstractmethod
+    def mostrar_info(self) -> str:
+        pass 
