@@ -64,7 +64,8 @@ class LoggerSistema:
             mensaje = f"{mensaje} - {type(exc_info).__name__}: {exc_info}"
         LoggerSistema._escribir("errores.log", f"[ERROR] {mensaje}")
 
-       # 3. CLASE ABSTRACTA ENTIDAD
+      
+ # 3. CLASE ABSTRACTA ENTIDAD
 
 class Entidad(ABC):
     """Clase base abstracta para todas las entidades."""
@@ -84,3 +85,71 @@ class Entidad(ABC):
     @abstractmethod
     def mostrar_info(self) -> str:
         pass 
+
+# 4. CLASE CLIENTE
+
+class Cliente(Entidad):
+    """Representa un cliente con validaciones robustas."""
+    
+    def __init__(self, id_cliente: str, nombre: str, email: str, telefono: str):
+        super().__init__(id_cliente, nombre)
+        self._email = self._validar_email(email)
+        self._telefono = self._validar_telefono(telefono)
+        self._fecha_registro = datetime.datetime.now()
+        self._activo = True
+    
+    @property
+    def email(self) -> str:
+        return self._email
+    
+    @email.setter
+    def email(self, valor: str) -> None:
+        self._email = self._validar_email(valor)
+    
+    @property
+    def telefono(self) -> str:
+        return self._telefono
+    
+    @telefono.setter
+    def telefono(self, valor: str) -> None:
+        self._telefono = self._validar_telefono(valor)
+    
+    @property
+    def activo(self) -> bool:
+        return self._activo
+    
+    def activar(self) -> None:
+        self._activo = True
+        LoggerSistema.registrar_evento(f"Cliente {self._id} activado.")
+    
+    def desactivar(self) -> None:
+        self._activo = False
+        LoggerSistema.registrar_evento(f"Cliente {self._id} desactivado.")
+    
+    def _validar_email(self, email: str) -> str:
+        patron = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        if not re.match(patron, email):
+            raise DatoInvalidoError(f"Email invalido: {email}")
+        return email
+    
+    def _validar_telefono(self, telefono: str) -> str:
+        if not telefono.isdigit() or len(telefono) < 7:
+            raise DatoInvalidoError(f"Telefono invalido: {telefono}")
+        return telefono
+    
+    def mostrar_info(self) -> str:
+        estado = "Activo" if self._activo else "Inactivo"
+        return f"Cliente {self._id}: {self._nombre} | Email: {self._email} | Tel: {self._telefono} | Estado: {estado}"
+    
+    def actualizar_datos(self, nombre: Optional[str] = None, email: Optional[str] = None, telefono: Optional[str] = None) -> None:
+        try:
+            if nombre is not None:
+                self._nombre = nombre
+            if email is not None:
+                self.email = email
+            if telefono is not None:
+                self.telefono = telefono
+            LoggerSistema.registrar_evento(f"Datos actualizados para cliente {self._id}")
+        except DatoInvalidoError as e:
+            LoggerSistema.registrar_error(f"Error al actualizar cliente {self._id}", e)
+            raise
