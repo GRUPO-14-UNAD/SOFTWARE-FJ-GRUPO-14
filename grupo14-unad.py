@@ -1,7 +1,8 @@
 """
 SOFTWARE-FJ-GRUPO-14
 Sistema Integral de Gestión de Clientes, Servicios y  Reservas
-CREADDORES: Juan David Crespo Carpio
+CREADORES: Juan David Crespo Carpio
+Liseth Camila Pastusan Valdes
 fecha de inicio: 19 de junio 2026
 """
 import re
@@ -153,3 +154,144 @@ class Cliente(Entidad):
         except DatoInvalidoError as e:
             LoggerSistema.registrar_error(f"Error al actualizar cliente {self._id}", e)
             raise
+            
+# 5. CLASE ABSTRACTA SERVICIO
+
+class Servicio(ABC):
+    """Clase abstracta que representa un servicio ofrecido por Software FJ."""
+
+    def __init__(self, id_servicio: str, nombre: str, disponible: bool = True):
+        self._id_servicio = self._validar_id(id_servicio)
+        self._nombre = self._validar_nombre(nombre)
+        self._disponible = disponible
+
+    @property
+    def id_servicio(self) -> str:
+        return self._id_servicio
+
+    @property
+    def nombre(self) -> str:
+        return self._nombre
+
+    @property
+    def disponible(self) -> bool:
+        return self._disponible
+
+    def cambiar_disponibilidad(self, estado: bool) -> None:
+        self._disponible = estado
+        LoggerSistema.registrar_evento(
+            f"Servicio {self._id_servicio} disponibilidad cambiada a {estado}"
+        )
+
+    def _validar_id(self, id_servicio: str) -> str:
+        if not id_servicio:
+            raise ParametroFaltanteError("El ID del servicio es obligatorio")
+        return id_servicio
+
+    def _validar_nombre(self, nombre: str) -> str:
+        if not nombre or len(nombre.strip()) < 3:
+            raise DatoInvalidoError("Nombre del servicio invalido")
+        return nombre
+
+    def validar_disponibilidad(self) -> None:
+        if not self._disponible:
+            raise ServicioNoDisponibleError(
+                f"El servicio {self._nombre} no esta disponible")
+
+    @abstractmethod
+    def calcular_costo(self, cantidad: int = 1, descuento: float = 0) -> float:
+        pass
+
+    @abstractmethod
+    def describir_servicio(self) -> str:
+        pass
+
+
+# 6. SERVICIO DE RESERVA DE SALAS
+
+class ReservaSala(Servicio):
+    """Servicio especializado para reservar salas."""
+
+    def __init__(self, id_servicio: str, nombre: str, capacidad: int, precio_hora: float):
+        super().__init__(id_servicio, nombre)
+        if capacidad <= 0:
+            raise DatoInvalidoError("Capacidad invalida")
+        
+        self._capacidad = capacidad
+        self._precio_hora = precio_hora
+
+
+    def calcular_costo(self, horas: int = 1, descuento: float = 0) -> float:
+        self.validar_disponibilidad()
+
+        costo = self._precio_hora * horas
+
+        if descuento > 0:
+            costo -= costo * (descuento / 100)
+
+        return costo
+
+    def describir_servicio(self) -> str:
+        return (
+            f"Sala: {self._nombre} | "
+            f"Capacidad: {self._capacidad} personas")
+
+# 7. SERVICIO DE ALQUILER DE EQUIPOS
+
+class AlquilerEquipo(Servicio):
+    """Servicio especializado para alquiler de equipos tecnológicos."""
+
+    def __init__(self, id_servicio: str, nombre: str, equipo: str, precio_dia: float):
+        super().__init__(id_servicio, nombre)
+
+        if precio_dia <= 0:
+            raise DatoInvalidoError("Precio invalido")
+
+        self._equipo = equipo
+        self._precio_dia = precio_dia
+
+
+    def calcular_costo(self, dias: int = 1, descuento: float = 0) -> float:
+        self.validar_disponibilidad()
+
+        costo = self._precio_dia * dias
+
+        if descuento:
+            costo -= costo * (descuento / 100)
+
+        return costo
+
+    def describir_servicio(self) -> str:
+        return (
+            f"Equipo: {self._equipo} | "
+            f"Servicio: {self._nombre}")       
+
+# 8. SERVICIO DE ASESORIA ESPECIALIZADA
+
+class AsesoriaEspecializada(Servicio):
+    """Servicio especializado de asesorias."""
+
+    def __init__(self, id_servicio: str, nombre: str, especialista: str, tarifa: float):
+        super().__init__(id_servicio, nombre)
+
+        if tarifa <= 0:
+            raise DatoInvalidoError("Tarifa invalida")
+
+        self._especialista = especialista
+        self._tarifa = tarifa
+
+
+    def calcular_costo(self, horas: int = 1, descuento: float = 0) -> float:
+        self.validar_disponibilidad()
+
+        costo = self._tarifa * horas
+
+        if descuento:
+            costo -= costo * (descuento / 100)
+
+        return costo
+
+    def describir_servicio(self) -> str:
+        return (
+            f"Asesoria con {self._especialista} | "
+            f"Servicio: {self._nombre}" )
